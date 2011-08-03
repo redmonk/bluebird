@@ -1,7 +1,17 @@
 #!/usr/bin/python2
+"""\
+A web interface for doing simple sentiment analysis queries of twitter.
+
+Implements the method described at: http://jeffreybreen.wordpress.com/2011/07/04/twitter-text-mining-r-slides/ 
+
+Usage: ./server.py
+"""
+
+__author__ = "Alex Henning"
+__version__ = "0.1.dev"
 
 import tweepy
-from bottle import run, route, template, view, request, static_file
+from bottle import Bottle, run, view, request, static_file
 from rpy2 import robjects
 from datetime import datetime
 
@@ -56,7 +66,9 @@ def getFreeRName():
 getFreeRName.count = 0
     
 ### Web Interface
-@route("/")
+app = Bottle()
+
+@app.route("/")
 @view("twitter-sentiment-query.html")
 def twitterSentimentQuery():
     "Returns the main page and handle form dat submits"
@@ -68,10 +80,10 @@ def twitterSentimentQuery():
     return {"q": q if q else "happy, sad",
             "graph": graph if q else "images/example.png"}
 
-@route("/images/:image")
+@app.route("/images/:image")
 def serveImage(image):
     "Serves images when requested"
     return static_file(image, root="images/")
 
 if __name__ == "__main__":
-    run(host="localhost", port=8348)
+    run(app, host="localhost", port=8348)

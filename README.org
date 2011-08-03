@@ -1,17 +1,32 @@
 
+* About
+
+* Installation and Setup
+1. Clone this repository
+2. Install all dependencies listed below
+3. Run it as =./server.py= with Python
+4. Visit =localhost:8348=
+5. Enter a query, if it works you're now free to use it on your local computer.
+
+* Usage
+
 * Dependencies
-** Python
-Install with "easy-install name"
+** Python (tested in 2.7)
+Can be installed with "easy-install name"
 - bottle
 - rpy2
 - numpy
 - tweepy
-** R
-Install in R with "install.packages('name')"
+** R (tested with 2.13.1)
+Can be install in R with "install.packages('name')"
 - plyr
 - ggplot2
 - stringr
 
 * Notes
-- Must add "export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/lib/R/lib" to .bashrc 
-- Bug when nothing returned in search. Defaults to one, neutral.
+- Must add "export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/lib/R/lib" to .bashrc
+: ImportError: libR.so: cannot open shared object file: No such file or directory
+This is the error you get if you don't. /usr/lib/R/lib should be replaced with the local path to libR.so
+
+
+- Bug when nothing returned in search. Defaults to one neutral item in the histogram.
