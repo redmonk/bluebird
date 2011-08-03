@@ -21,53 +21,33 @@ def get_tweets(search, n=1500):
 ### R Interface
 def getSentimentHist(queries):
     "Return the path to an image containing stacked histograms of the sentiment"
+    print "Calculating histogram for: %s"%(queries,)
     path = "images/"+str(datetime.now())+".png"
-    print "Calling calcSentimentScores() on each of %s"%(queries,)
     variables = [calcSentimentScores(query) for query in queries]
-    print r.ls(robjects.globalenv)
-    print variables
-    # scores = [r[v+".scores"] for v in variables]
-    # robjects.globalenv["allscores"] = r["rbind"](*scores)
-    # r("ggplot(data=allscores) + geom_bar(mapping=aes(x=score), binwidth=1)\
-    #    + theme_bw() + scale_fill_brewer()")
-    # r("ggsave(file='%s')"%path)
-    print """allscores <- rbind(%(variables.scores)s)
-         ggplot(data=allscores) + theme_bw() + scale_fill_brewer()
-         ggsave(file="%(path)s")
-      """%{"variables.scores": ", ".join([i+".scores" for i in variables]),
-           "path": path}
-    r("""allscores <- rbind(%(variables.scores)s)
-         ggplot(data=allscores) + geom_bar(mapping=aes(x=score, fill=Project),\
+    r_query = """\
+              allscores <- rbind(%(variables.scores)s)
+              ggplot(data=allscores) + geom_bar(mapping=aes(x=score, fill=Project),\
               binwidth=1) + facet_grid(Project~.) + theme_bw() + scale_fill_brewer()
-         ggsave(file="%(path)s")
-      """%{"variables.scores": ", ".join([i+".scores" for i in variables]),
-           "path": path})
+              ggsave(file="%(path)s")
+              """%{"variables.scores": ", ".join([i+".scores" for i in variables]),
+                   "path": path}
+    print r_query
+    r(r_query)
     return path
 
 def calcSentimentScores(search):
     "Calculate the score in R and return the R variable refering to the object"
     varName = getFreeRName()
-    print varName
-    # robjects.globalenv[varName+".text"] = [tweet.text for tweet in get_tweets(search)]
-    # robjects.globalenv[varName+".scores"] = score_sentiment(r[varName+".text"])
-    # robjects.globalenv[varName+".scores$Project"] = search
     tweets = [tweet.text for tweet in get_tweets(search)]
     tweets = robjects.StrVector(tweets if tweets else ["Neutral"])
-    print """%(var)s.text <- %(tweet_text)s
-         %(var)s.scores <- score.sentiment(%(var)s.text, pos.words, neg.words)
-         %(var)s.scores$Project = "%(search)s"
-      """%{"var": varName, "tweet_text": tweets.r_repr(), "search": search}
-    r("""%(var)s.text <- %(tweet_text)s
-         %(var)s.scores <- score.sentiment(%(var)s.text, pos.words, neg.words)
-         %(var)s.scores$Project = "%(search)s"
-      """%{"var": varName, "tweet_text": tweets.r_repr(), "search": search})
+    r_query = """\
+              %(var)s.text <- %(tweet_text)s
+              %(var)s.scores <- score.sentiment(%(var)s.text, pos.words, neg.words)
+              %(var)s.scores$Project = "%(search)s"
+              """%{"var": varName, "tweet_text": tweets.r_repr(), "search": search}
+    print r_query
+    r(r_query)
     return varName
-
-def score_sentiment(text, pos_words=None, neg_words=None):
-    "A wrapper around the R score.sentiment function"
-    if not(pos_words): pos_words = r["pos.words"]
-    if not(neg_words): neg_words = r["neg.words"]
-    return r["score.sentiment"](text, pos_words, neg_words)
 
 def getFreeRName():
     "Returns an R variable name not currently in use"
