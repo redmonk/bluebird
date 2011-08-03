@@ -65,7 +65,8 @@ def twitterSentimentQuery():
         print "Getting graph"
         graph = getSentimentHist([s.strip() for s in q.split(",")])
         print "Path to graph: %s"%(graph)
-    return {"q": q, "graph": graph if q else "images/test.png"}
+    return {"q": q if q else "happy, sad",
+            "graph": graph if q else "images/example.png"}
 
 @route("/images/:image")
 def serveImage(image):

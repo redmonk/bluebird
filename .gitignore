@@ -1,2 +1,4 @@
 *~
 *.pyc
+images/*
+!images/example.png
