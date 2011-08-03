@@ -1,0 +1,15 @@
+
+* Dependencies
+** Python
+Install with "easy-install name"
+- bottle
+- rpy2
+- numpy
+** R
+Install in R with "install.packages('name')"
+- twitteR
+- plyr
+- ggplot2
+
+* Notes
+- Must add "export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/lib/R/lib" to .bashrc 
