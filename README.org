@@ -14,3 +14,4 @@ Install in R with "install.packages('name')"
 
 * Notes
 - Must add "export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/lib/R/lib" to .bashrc 
+- Bug when nothing returned in search. Defaults to one, neutral.

@@ -1,7 +1,7 @@
 #!/usr/bin/python2
 
 import tweepy
-from bottle import run, route, template, view, request
+from bottle import run, route, template, view, request, static_file
 from rpy2 import robjects
 from datetime import datetime
 
@@ -22,21 +22,45 @@ def get_tweets(search, n=1500):
 def getSentimentHist(queries):
     "Return the path to an image containing stacked histograms of the sentiment"
     path = "images/"+str(datetime.now())+".png"
+    print "Calling calcSentimentScores() on each of %s"%(queries,)
     variables = [calcSentimentScores(query) for query in queries]
+    print r.ls(robjects.globalenv)
     print variables
-    print ", ".join(v+".scores" for v in variables)
-    robjects.globalenv["allscores"] = r["rbind"](*[r[v+".scores"] for v in variables])
-    r("ggplot(data=allscores) + geom_bar(mapping=aes(x=score), binwidth=1)\
-       + theme_bw() + scale_fill_brewer()")
-    r("ggsave(file='%s')"%path)
+    # scores = [r[v+".scores"] for v in variables]
+    # robjects.globalenv["allscores"] = r["rbind"](*scores)
+    # r("ggplot(data=allscores) + geom_bar(mapping=aes(x=score), binwidth=1)\
+    #    + theme_bw() + scale_fill_brewer()")
+    # r("ggsave(file='%s')"%path)
+    print """allscores <- rbind(%(variables.scores)s)
+         ggplot(data=allscores) + theme_bw() + scale_fill_brewer()
+         ggsave(file="%(path)s")
+      """%{"variables.scores": ", ".join([i+".scores" for i in variables]),
+           "path": path}
+    r("""allscores <- rbind(%(variables.scores)s)
+         ggplot(data=allscores) + geom_bar(mapping=aes(x=score, fill=Project),\
+              binwidth=1) + facet_grid(Project~.) + theme_bw() + scale_fill_brewer()
+         ggsave(file="%(path)s")
+      """%{"variables.scores": ", ".join([i+".scores" for i in variables]),
+           "path": path})
     return path
 
 def calcSentimentScores(search):
     "Calculate the score in R and return the R variable refering to the object"
     varName = getFreeRName()
-    robjects.globalenv[varName+".text"] = [tweet.text for tweet in get_tweets(search)]
-    robjects.globalenv[varName+".scores"] = score_sentiment(r[varName+".text"])
-    robjects.globalenv[varName+".scores$Project"] = search
+    print varName
+    # robjects.globalenv[varName+".text"] = [tweet.text for tweet in get_tweets(search)]
+    # robjects.globalenv[varName+".scores"] = score_sentiment(r[varName+".text"])
+    # robjects.globalenv[varName+".scores$Project"] = search
+    tweets = [tweet.text for tweet in get_tweets(search)]
+    tweets = robjects.StrVector(tweets if tweets else ["Neutral"])
+    print """%(var)s.text <- %(tweet_text)s
+         %(var)s.scores <- score.sentiment(%(var)s.text, pos.words, neg.words)
+         %(var)s.scores$Project = "%(search)s"
+      """%{"var": varName, "tweet_text": tweets.r_repr(), "search": search}
+    r("""%(var)s.text <- %(tweet_text)s
+         %(var)s.scores <- score.sentiment(%(var)s.text, pos.words, neg.words)
+         %(var)s.scores$Project = "%(search)s"
+      """%{"var": varName, "tweet_text": tweets.r_repr(), "search": search})
     return varName
 
 def score_sentiment(text, pos_words=None, neg_words=None):
@@ -55,9 +79,18 @@ getFreeRName.count = 0
 @route("/")
 @view("twitter-sentiment-query.html")
 def twitterSentimentQuery():
-    q = request.GET.get("q", "@github, #gitorious, git meetup")
-    graph = getSentimentHist([s.strip() for s in q.split(",")])
-    return {"q": q, "graph": graph}
+    "Returns the main page and handle form dat submits"
+    q = request.GET.get("q", None)
+    if q:
+        print "Getting graph"
+        graph = getSentimentHist([s.strip() for s in q.split(",")])
+        print "Path to graph: %s"%(graph)
+    return {"q": q, "graph": graph if q else "images/test.png"}
+
+@route("/images/:image")
+def serveImage(image):
+    "Serves images when requested"
+    return static_file(image, root="images/")
 
 if __name__ == "__main__":
     run(host="localhost", port=8348)
