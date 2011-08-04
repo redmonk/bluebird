@@ -1,3 +1,5 @@
+import datetime, logging
+
 ### Server Settings  ############################################################
 # The host and port to bind the server to
 host = "192.168.1.3"
@@ -15,6 +17,12 @@ defaultSearch = "images/example.png"
 # The file containing the html template for the app
 mainTemplate = "twitter-sentiment-query.html"
 
+# Time to cache twitter results
+cache_time = datetime.timedelta(days=1)
+
+# Logging settings
+logFile = "server.log"
+loggingLevel = logging.DEBUG
 
 ### R Code & Settings  ###########################################################
 # R file containing the setup code (load libraries and define score.sentiment)
@@ -36,3 +44,9 @@ r_generate_graph = """\
     ggsave(file="%(path)s")
     dev.off()
 """
+
+# The R code to delete variables
+r_delete_vars = """\
+    rm(%(var)s.text)
+    rm(%(var)s.scores)
+""" 
