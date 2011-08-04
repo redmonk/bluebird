@@ -1,25 +1,78 @@
 <html>
   <head>
     <title>Simple Sentiment Analysis of Twitter</title>
+    <script type="text/javascript" src="static/jquery-1.6.2.min.js"></script>
     <style type="text/css">
       div.wrapper {
           width: 600px;
           margin: 10px auto;
       }
+      label {
+          font-weight: bold;
+      }
       input[type=input] {
-          width: 500px;
+          width: 480px;
+      }
+      textarea {
+          float: right;
+          width: 480px;
+          height: 100px;
+      }
+      input[type=submit] {
+          float: right
+      }
+      img.result {
+          width: 100%
+      }
+      .advanced {
+          float: right;
+          font-size: 10px;
+      }
+      #options {
+          margin-top: 40px;
+      }
+      .float {
+          float: left;
+          width: 600px;
+          margin-top: 10px;
+      }
+      .floatRight {
+          float: right;
+      }
+      .hidden {
+          display: none;
       }
     </style>
   </head>
   <body>
     <div id="query" class="wrapper">
       <form method="get" id="sentiment-form" action=".">
-	<input type="input" name="q" value="{{q}}" />
+	<input type="input" name="q" value="{{ q }}" />
 	<input type="submit" name="submit" value="Submit" />
+	<p class="advanced">
+	  <a href="javascript:$('#options').toggleClass('hidden')">
+	    Advanced Options
+	  </a>
+	</p>
+	<div id="options" class="hidden">
+	  <div class="float">
+	    <label for="labels">Labels:</label>
+	    <input type="input" name="labels" value="{{ q }}" class="floatRight"/>
+	  </div>
+	  <div class="float">
+	    <label for="pos.words">Positive words:</label>
+	    <textarea name="pos.words"></textarea>
+	  </div>
+	  <div class="float">
+	    <label for="neg.words">Negative words:</label>
+	    <textarea name="neg.words"></textarea>
+	  </div>
+	  <center><b>
+	      <a href="javascript:$('#options').toggleClass('hidden')">Hide</a>
+	  </b></center>
+	</div>
       </form>
     </div>
-    <div id="results" class="wrapper">
-	 <img src="{{ graph }}" />
-    </div>
+    <img src="{{ graph }}" class="result" />
   </body>
 </html>

@@ -37,8 +37,10 @@ def getSentimentHist(queries):
     r_query = """\
               allscores <- rbind(%(variables.scores)s)
               ggplot(data=allscores) + geom_bar(mapping=aes(x=score, fill=Project),\
-              binwidth=1) + facet_grid(Project~.) + theme_bw() + scale_fill_brewer()
+                  binwidth=1) + facet_grid(Project~.) + theme_bw()\
+                + scale_fill_brewer()
               ggsave(file="%(path)s")
+              dev.off()
               """%{"variables.scores": ", ".join([i+".scores" for i in variables]),
                    "path": path}
     print r_query
@@ -80,10 +82,15 @@ def twitterSentimentQuery():
     return {"q": q if q else "happy, sad",
             "graph": graph if q else "images/example.png"}
 
+@app.route("/static/:path")
+def serveStaticMedia(path):
+    "Serves static media when requested"
+    return static_file(path, root="static/")
+
 @app.route("/images/:image")
 def serveImage(image):
     "Serves images when requested"
     return static_file(image, root="images/")
 
 if __name__ == "__main__":
-    run(app, host="localhost", port=8348)
+    run(app, host="192.168.1.3", port=8348)
