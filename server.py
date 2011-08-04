@@ -15,12 +15,13 @@ from bottle import Bottle, run, view, request, static_file
 from rpy2 import robjects
 from datetime import datetime
 
+import settings as S
+
 ### Load R Libraries
 r = robjects.r
 
 # Executes `R-setup.R' in our local R environment
-with file("R-setup.R") as f:
-    r(f.read())
+with file(S.r_setup) as f: r(f.read())
 
 ### Twitter Interface
 api = tweepy.API()
@@ -34,15 +35,9 @@ def getSentimentHist(queries):
     print "Calculating histogram for: %s"%(queries,)
     path = "images/"+str(datetime.now())+".png"
     variables = [calcSentimentScores(query) for query in queries]
-    r_query = """\
-              allscores <- rbind(%(variables.scores)s)
-              ggplot(data=allscores) + geom_bar(mapping=aes(x=score, fill=Project),\
-                  binwidth=1) + facet_grid(Project~.) + theme_bw()\
-                + scale_fill_brewer()
-              ggsave(file="%(path)s")
-              dev.off()
-              """%{"variables.scores": ", ".join([i+".scores" for i in variables]),
-                   "path": path}
+    r_query = S.r_generate_graph%{"variables.scores": \
+                                      ", ".join([i+".scores" for i in variables]),
+                                  "path": path}
     print r_query
     r(r_query)
     return path
@@ -52,11 +47,9 @@ def calcSentimentScores(search):
     varName = getFreeRName()
     tweets = [tweet.text for tweet in get_tweets(search)]
     tweets = robjects.StrVector(tweets if tweets else ["Neutral"])
-    r_query = """\
-              %(var)s.text <- %(tweet_text)s
-              %(var)s.scores <- score.sentiment(%(var)s.text, pos.words, neg.words)
-              %(var)s.scores$Project = "%(search)s"
-              """%{"var": varName, "tweet_text": tweets.r_repr(), "search": search}
+    r_query = S.r_calculate_sentiment%{"var": varName,
+                                       "tweet_text": tweets.r_repr(),
+                                       "search": search}
     print r_query
     r(r_query)
     return varName
@@ -71,7 +64,7 @@ getFreeRName.count = 0
 app = Bottle()
 
 @app.route("/")
-@view("twitter-sentiment-query.html")
+@view(S.mainTemplate)
 def twitterSentimentQuery():
     "Returns the main page and handle form dat submits"
     q = request.GET.get("q", None)
@@ -79,8 +72,8 @@ def twitterSentimentQuery():
         print "Getting graph"
         graph = getSentimentHist([s.strip() for s in q.split(",")])
         print "Path to graph: %s"%(graph)
-    return {"q": q if q else "happy, sad",
-            "graph": graph if q else "images/example.png"}
+    return {"q": q if q else S.defaultSearch,
+            "graph": graph if q else S.defaultImage}
 
 @app.route("/static/:path")
 def serveStaticMedia(path):
@@ -90,7 +83,6 @@ def serveStaticMedia(path):
 @app.route("/images/:image")
 def serveImage(image):
     "Serves images when requested"
-    return static_file(image, root="images/")
-
+    return static_file(image, root=S.imagePath)
 if __name__ == "__main__":
-    run(app, host="192.168.1.3", port=8348)
+    run(app, host=S.host, port=S.port)
