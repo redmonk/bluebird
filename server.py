@@ -73,20 +73,26 @@ def getSentimentHist(queries):
                                       ", ".join([i+".scores" for i in variables]),
                                   "path": path}
     logging.info(r_query)
+    print "Graphing..."; t = datetime.now()
     r(r_query)
+    print "It took %s to graph the results."%(datetime.now()-t)
     return path
 
 @cacheRVariable(S.cache_time)
 def calcSentimentScores(search):
     "Calculate the score in R and return the R variable refering to the object"
     varName = getFreeRName()
+    print "Handling %s"%(search); t = datetime.now()
     tweets = [tweet.text for tweet in getTweets(search)]
+    print "It took %s to fetch %s tweets"%(datetime.now()-t, len(tweets)); t = datetime.now()
     tweets = robjects.StrVector(tweets if tweets else ["Neutral"])
     r_query = S.r_calculate_sentiment%{"var": varName,
                                        "tweet_text": tweets.r_repr(),
                                        "search": search}
     logging.info(r_query)
+    print "It took %s to log %s tweets"%(datetime.now()-t, len(tweets)); t = datetime.now()
     r(r_query)
+    print "It took %s to to analyze %s tweets"%(datetime.now()-t, len(tweets));
     return varName
 
 def getFreeRName():
@@ -105,7 +111,9 @@ def twitterSentimentQuery():
     q = request.GET.get("q", None)
     if q:
         logging.info("Getting graph")
+        t = datetime.now()
         graph = getSentimentHist([s.strip() for s in q.split(",")])
+        print "It took %s for the whole process."%(datetime.now()-t)
         logging.info("Path to graph: %s"%(graph))
     return {"q": q if q else S.defaultSearch,
             "graph": graph if q else S.defaultImage}

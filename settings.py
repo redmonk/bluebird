@@ -38,6 +38,7 @@ r_calculate_sentiment = """\
 # The R code for creating the histogram of the resulting scores
 r_generate_graph = """\
     allscores <- rbind(%(variables.scores)s)
+    png(file="%(path)s")
     ggplot(data=allscores) + geom_bar(mapping=aes(x=score, fill=Project),\
         binwidth=1) + facet_grid(Project~.) + theme_bw()\
      + scale_fill_brewer()
