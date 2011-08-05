@@ -57,15 +57,16 @@
 	<div id="options" class="hidden">
 	  <div class="float">
 	    <label for="labels">Labels:</label>
-	    <input type="input" name="labels" value="{{ q }}" class="floatRight"/>
+	    <input type="input" name="labels" value="{{ labels }}"
+		   class="floatRight"/>
 	  </div>
 	  <div class="float">
 	    <label for="pos.words">Positive words:</label>
-	    <textarea name="pos.words"></textarea>
+	    <textarea name="pos.words">{{ pos_words }}</textarea>
 	  </div>
 	  <div class="float">
 	    <label for="neg.words">Negative words:</label>
-	    <textarea name="neg.words"></textarea>
+	    <textarea name="neg.words">{{ neg_words }}</textarea>
 	  </div>
 	  <center><b>
 	      <a href="javascript:$('#options').toggleClass('hidden')">Hide</a>

@@ -5,8 +5,8 @@ library("ggplot2")
 hu.liu.pos <- scan('positive-words.txt', what='character', comment.char=';')
 hu.liu.neg <- scan('negative-words.txt', what='character', comment.char=';')
 
-pos.words <- c(hu.liu.pos, 'scales', 'the bomb')
-neg.words <- c(hu.liu.neg, 'slow', 'dropped', 'corrupted', 'lost')
+pos.words <- hu.liu.pos
+neg.words <- hu.liu.neg
 
 # Sentiment scoring function
 score.sentiment = function(sentences, pos.words, neg.words, .progress='none')

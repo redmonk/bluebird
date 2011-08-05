@@ -26,49 +26,80 @@ r = robjects.r
 with file(S.r_setup) as r_file: r(r_file.read())
 
 ### Utils
-def cacheRVariable(cacheTime):
+def cache(cacheTime, removeFunc=lambda key, time, val: None):
     """A decorator for caching the results of a function for a fixed amount of time
 
-    Specifically the function must return an R variable, that will be
-    deleted from the R scope when it's time in the cache is up to
-    prevent memory issues.
+    All arguments and returned values of cached functions must be
+    hashable, otherwise you will get errors. Written to be generic
+    enough to interact with R and delete those variables if necessary
+    by accepting a function that is called when an object is removed
+    from the cache.
+
+    Usage:
+    @cache(datetime.timedelta(days=1))
+    @cache(datetime.timedelta(days=1), f)
     """
     cache = {}
     def dec(f):
-        def call(*args):
+        def call(*args, **kwargs):
             # Clean the cache of old entries
             now = datetime.now()
-            logging.info("Cleaning cache at time %s", now)
+            logging.info("%s: Cleaning cache at time %s", f.__name__, now)
             for key, (time, val) in cache.items():
                 logging.info("Checking cache of %s, the cache is %s old",
                              key, now-time)
                 if (now - time) > cacheTime:
-                    logging.info("Removing", key, (time, val))
-                    r_query = S.r_delete_vars%{"var": val}
-                    logging.info(r_query)
-                    r(r_query)
+                    logging.info("%s: Removing %s %s", f.__name__,key, (time, val))
+                    removeFunc(key, time, val)
                     del cache[key]
 
             # See if there is a cached result to return
-            if args in cache.keys(): return cache[args][1]
+            key = (args, tuple(kwargs.items()))
+            print f.__name__, key
+            if key in cache.keys(): return cache[key][1]
             else:
-                cache[args] = (datetime.now(), f(*args))
-                return cache[args][1]
+                cache[key] = (datetime.now(), f(*args, **kwargs))
+                return cache[key][1]
         return call
     return dec
 
+def deleteRVars(key, time, val):
+    "Delete var.text and var.score"
+    r_query = S.r_delete_vars%{"var": val}
+    logging.info(r_query)
+    r(r_query)
+
 ### Twitter Interface
 api = tweepy.API()
+@cache(S.cache_time)
 def getTweets(search, n=1500):
     "Get up to 1500 tweets from the last week from twitter containing the search term"
-    return tweepy.Cursor(api.search, q=search, rpp=100).items(n)
+    return tuple(tweepy.Cursor(api.search, q=search, rpp=100).items(n))
 
 ### R Interface
-def getSentimentHist(queries):
+@cache(S.cache_time)
+def getSentimentHist(queries, labels, pos_words, neg_words):
     "Return the path to an image containing stacked histograms of the sentiment"
     logging.info("Calculating histogram for: %s", (queries,))
     path = "images/"+str(datetime.now())+".png"
-    variables = [calcSentimentScores(query) for query in queries]
+
+    # Setup the extra words
+    r_query = S.r_setup_sentiment%{
+        "pos.words": ", ".join('"'+i+'"' for i in pos_words),
+        "neg.words": ", ".join('"'+i+'"' for i in neg_words)}
+    logging.info(r_query)
+    r(r_query)
+    
+    variables = [calcSentimentScores(query, pos_words, neg_words)
+                 for query in queries]
+    for i in range(len(variables)):
+        r_query = S.r_set_var_project%{
+            "var": variables[i],
+            "project": labels[i] if i < len(labels) else queries[i]}
+        logging.info(r_query)
+        r(r_query)
+
+    
     r_query = S.r_generate_graph%{"variables.scores": \
                                       ", ".join([i+".scores" for i in variables]),
                                   "path": path}
@@ -78,9 +109,12 @@ def getSentimentHist(queries):
     print "It took %s to graph the results."%(datetime.now()-t)
     return path
 
-@cacheRVariable(S.cache_time)
-def calcSentimentScores(search):
-    "Calculate the score in R and return the R variable refering to the object"
+@cache(S.cache_time, deleteRVars)
+def calcSentimentScores(search, pos_words, neg_words):
+    """Calculate the score in R and return the R variable refering to the object
+
+    Accepts pos_words and neg_words to break the cache.
+    """
     varName = getFreeRName()
     print "Handling %s"%(search); t = datetime.now()
     tweets = [tweet.text for tweet in getTweets(search)]
@@ -92,7 +126,7 @@ def calcSentimentScores(search):
     logging.info(r_query)
     print "It took %s to log %s tweets"%(datetime.now()-t, len(tweets)); t = datetime.now()
     r(r_query)
-    print "It took %s to to analyze %s tweets"%(datetime.now()-t, len(tweets));
+    print "It took %s to to analyze %s tweets"%(datetime.now()-t, len(tweets))
     return varName
 
 def getFreeRName():
@@ -108,14 +142,32 @@ app = Bottle(catchall=False)
 @view(S.mainTemplate)
 def twitterSentimentQuery():
     "Returns the main page and handle form dat submits"
-    q = request.GET.get("q", None)
+    q = request.GET.get("q")
+    labels = request.GET.get("labels")
+    pos_words = request.GET.get("pos.words")
+    neg_words = request.GET.get("neg.words")
     if q:
+        # Make the additional options are they're lists
+        labels_list = tuple(s.strip() for s in labels.split(","))\
+            if labels else tuple()
+        pos_words_list = tuple(s.strip() for s in pos_words.split(","))\
+            if pos_words else ("",)
+        neg_words_list = tuple(s.strip() for s in neg_words.split(","))\
+            if neg_words else ("",)
+        
         logging.info("Getting graph")
         t = datetime.now()
-        graph = getSentimentHist([s.strip() for s in q.split(",")])
+        graph = getSentimentHist(tuple(s.strip() for s in q.split(",")),
+                                 labels=labels_list,
+                                 pos_words=pos_words_list,
+                                 neg_words=neg_words_list)
         print "It took %s for the whole process."%(datetime.now()-t)
-        logging.info("Path to graph: %s"%(graph))
+        logging.info("Path to graph: %s", graph)
     return {"q": q if q else S.defaultSearch,
+            "labels": labels if labels else "",
+            "pos_words": pos_words if pos_words else "",
+            "neg_words": neg_words if neg_words else "",
+            "show_advanced": (labels or pos_words or neg_words),
             "graph": graph if q else S.defaultImage}
 
 @app.route("/static/:path")

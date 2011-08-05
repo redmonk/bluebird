@@ -28,12 +28,21 @@ loggingLevel = logging.DEBUG
 # R file containing the setup code (load libraries and define score.sentiment)
 r_setup = "R-setup.R"
 
+# The R code that adds extra words for the sentiment analysis
+r_setup_sentiment = """\
+    pos.words <- c(hu.liu.pos, %(pos.words)s)
+    neg.words <- c(hu.liu.neg, %(neg.words)s)
+"""
+
 # The R code for creating the list of sentiment scores from the tweets
 r_calculate_sentiment = """\
     %(var)s.text <- %(tweet_text)s
     %(var)s.scores <- score.sentiment(%(var)s.text, pos.words, neg.words)
-    %(var)s.scores$Project = "%(search)s"
 """
+
+# The R code that set the projects label on the graph
+r_set_var_project = '%(var)s.scores$Project = "%(project)s"'
+
 
 # The R code for creating the histogram of the resulting scores
 r_generate_graph = """\
