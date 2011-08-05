@@ -2,4 +2,4 @@
 *.pyc
 images/*
 !images/example.png
-server.log
+bluebird.log

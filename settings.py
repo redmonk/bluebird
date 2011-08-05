@@ -15,13 +15,13 @@ defaultSearch = "happy, sad"
 defaultImage = "images/example.png"
 
 # The file containing the html template for the app
-mainTemplate = "twitter-sentiment-query.html"
+mainTemplate = "bluebird.html"
 
 # Time to cache twitter results
 cache_time = datetime.timedelta(days=1)
 
 # Logging settings
-logFile = "server.log"
+logFile = "bluebird.log"
 loggingLevel = logging.DEBUG
 
 ### R Code & Settings  ###########################################################

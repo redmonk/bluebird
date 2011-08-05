@@ -2,9 +2,9 @@
 """\
 A web interface for doing simple sentiment analysis queries of twitter.
 
-Implements the method described at: http://jeffreybreen.wordpress.com/2011/07/04/twitter-text-mining-r-slides/ 
+Provides a web interface to the method of sentiment analysis of twitter described at: http://jeffreybreen.wordpress.com/2011/07/04/twitter-text-mining-r-slides/ 
 
-Usage: ./server.py
+Usage: ./bluebird.py
 """
 
 __author__ = "Alex Henning"
@@ -111,7 +111,7 @@ def getSentimentHist(queries, labels, pos_words, neg_words):
 
 @cache(S.cache_time, deleteRVars)
 def calcSentimentScores(search, pos_words, neg_words):
-    """Calculate the score in R and return the R variable refering to the object
+    """Calculate the score in R and return the R variable referring to the object
 
     Accepts pos_words and neg_words to break the cache.
     """
@@ -126,7 +126,7 @@ def calcSentimentScores(search, pos_words, neg_words):
     logging.info(r_query)
     print "It took %s to log %s tweets"%(datetime.now()-t, len(tweets)); t = datetime.now()
     r(r_query)
-    print "It took %s to to analyze %s tweets"%(datetime.now()-t, len(tweets))
+    print "It took %s to analyze %s tweets"%(datetime.now()-t, len(tweets))
     return varName
 
 def getFreeRName():
@@ -141,7 +141,7 @@ app = Bottle(catchall=False)
 @app.route("/")
 @view(S.mainTemplate)
 def twitterSentimentQuery():
-    "Returns the main page and handle form dat submits"
+    "Returns the main page and handle form data submits"
     q = request.GET.get("q")
     labels = request.GET.get("labels")
     pos_words = request.GET.get("pos.words")
