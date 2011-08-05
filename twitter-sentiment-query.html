@@ -1,79 +1,93 @@
 <html>
   <head>
-    <title>Simple Sentiment Analysis of Twitter</title>
+    <title>Blue Bird: Simple Twitter Sentiment Analysis</title>
     <script type="text/javascript" src="static/jquery-1.6.2.min.js"></script>
     <style type="text/css">
       div.wrapper {
           width: 600px;
           margin: 10px auto;
       }
-      label {
-          font-weight: bold;
-      }
-      input[type=input] {
-          width: 480px;
-      }
+      label { font-weight: bold; }
+      input[type=input] { width: 480px; }
+      input[type=submit] { float: right }
       textarea {
           float: right;
           width: 480px;
           height: 100px;
       }
-      input[type=submit] {
-          float: right
+      #top {
+          position: absolute;
+          top: 0px;
+          left: 0px;
+          right: 0px;
+          background-color: #4099FF;
+          border-bottom: 5px solid #989898;
       }
-      img.result {
-          width: 100%
-      }
+      a { color: white; font-weight: bold }
       .advanced {
           float: right;
-          font-size: 10px;
+          margin: 1px;
       }
       #options {
-          margin-top: 40px;
+          margin-top: 10px;
       }
       .float {
           float: left;
           width: 600px;
           margin-top: 10px;
       }
-      .floatRight {
-          float: right;
-      }
-      .hidden {
-          display: none;
-      }
+      .floatRight { float: right; }
+      .hidden { display: none; }
+      img.result { width: 100% }
     </style>
+    <script type="text/javascript">
+      function toggleAdvanced() {
+          $('#options').slideToggle('slow', function() {
+              $('img.result').css('margin-top', $('#top').height()+'px');
+          });
+      }
+    </script>
   </head>
   <body>
-    <div id="query" class="wrapper">
-      <form method="get" id="sentiment-form" action=".">
-	<input type="input" name="q" value="{{ q }}" />
-	<input type="submit" name="submit" value="Submit" />
-	<p class="advanced">
-	  <a href="javascript:$('#options').toggleClass('hidden')">
-	    Advanced Options
-	  </a>
-	</p>
-	<div id="options" class="hidden">
-	  <div class="float">
-	    <label for="labels">Labels:</label>
-	    <input type="input" name="labels" value="{{ labels }}"
-		   class="floatRight"/>
+    <div id="top">
+      <div id="query" class="wrapper">
+	<form method="get" id="sentiment-form" action=".">
+	  <input type="input" name="q" value="{{ q }}" />
+	  <input type="submit" name="submit" value="Analyze" /><br/>
+	  Use commas to compare multiple searches. (max 8)
+	  <p class="advanced">
+	    <a href="javascript:toggleAdvanced()">
+	      Show additional options.
+	    </a>
+	  </p>
+	  <div id="options" \\
+	       %if not show_advanced:
+	       class="hidden"\\
+	       %end
+	       >
+	    <div class="float">
+	      <label for="labels">Labels:</label>
+	      <input type="input" name="labels" value="{{ labels }}"
+		     class="floatRight"/>
+	    </div>
+	    <div class="float">
+	      <label for="pos.words">Positive words:</label>
+	      <textarea name="pos.words">{{ pos_words }}</textarea>
+	    </div>
+	    <div class="float">
+	      <label for="neg.words">Negative words:</label>
+	      <textarea name="neg.words">{{ neg_words }}</textarea>
+	    </div>
+	    <center>
+		<a href="javascript:toggleAdvanced() ">Hide</a>
+	    </center>
 	  </div>
-	  <div class="float">
-	    <label for="pos.words">Positive words:</label>
-	    <textarea name="pos.words">{{ pos_words }}</textarea>
-	  </div>
-	  <div class="float">
-	    <label for="neg.words">Negative words:</label>
-	    <textarea name="neg.words">{{ neg_words }}</textarea>
-	  </div>
-	  <center><b>
-	      <a href="javascript:$('#options').toggleClass('hidden')">Hide</a>
-	  </b></center>
-	</div>
-      </form>
+	</form>
+      </div>
     </div>
     <img src="{{ graph }}" class="result" />
+    <script type="text/javascript">
+      $('img.result').css('margin-top', $('#top').height()+'px')
+    </script>
   </body>
 </html>

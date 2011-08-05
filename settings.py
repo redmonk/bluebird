@@ -10,9 +10,9 @@ port = 8348
 imagePath = "images/"
 
 # The default search to display in the textbox
-defaultImage = "happy, sad"
+defaultSearch = "happy, sad"
 # The default image to display when the showing the page with no query
-defaultSearch = "images/example.png"
+defaultImage = "images/example.png"
 
 # The file containing the html template for the app
 mainTemplate = "twitter-sentiment-query.html"
@@ -42,7 +42,6 @@ r_calculate_sentiment = """\
 
 # The R code that set the projects label on the graph
 r_set_var_project = '%(var)s.scores$Project = "%(project)s"'
-
 
 # The R code for creating the histogram of the resulting scores
 r_generate_graph = """\
