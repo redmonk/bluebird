@@ -55,7 +55,6 @@ def cache(cacheTime, removeFunc=lambda key, time, val: None):
 
             # See if there is a cached result to return
             key = (args, tuple(kwargs.items()))
-            print f.__name__, key
             if key in cache.keys(): return cache[key][1]
             else:
                 cache[key] = (datetime.now(), f(*args, **kwargs))
@@ -65,9 +64,10 @@ def cache(cacheTime, removeFunc=lambda key, time, val: None):
 
 def deleteRVars(key, time, val):
     "Delete var.text and var.score"
-    r_query = S.r_delete_vars%{"var": val}
-    logging.info(r_query)
-    r(r_query)
+    r(S.r_delete_vars%{"var": val})
+
+def convertStringToTuple(string, split=","):
+    return tuple(s.strip() for s in string.split(split))
 
 ### Twitter Interface
 api = tweepy.API()
@@ -84,29 +84,26 @@ def getSentimentHist(queries, labels, pos_words, neg_words):
     path = "images/"+str(datetime.now())+".png"
 
     # Setup the extra words
-    r_query = S.r_setup_sentiment%{
+    logging.debug("Running settings.r_setup_sentiment for pos:%s neg:%s.",
+                  pos_words, neg_words)
+    r(S.r_setup_sentiment%{
         "pos.words": ", ".join('"'+i+'"' for i in pos_words),
-        "neg.words": ", ".join('"'+i+'"' for i in neg_words)}
-    logging.info(r_query)
-    r(r_query)
+        "neg.words": ", ".join('"'+i+'"' for i in neg_words)})
     
     variables = [calcSentimentScores(query, pos_words, neg_words)
                  for query in queries]
-    for i in range(len(variables)):
-        r_query = S.r_set_var_project%{
-            "var": variables[i],
-            "project": labels[i] if i < len(labels) else queries[i]}
-        logging.info(r_query)
-        r(r_query)
-
     
-    r_query = S.r_generate_graph%{"variables.scores": \
-                                      ", ".join([i+".scores" for i in variables]),
-                                  "path": path}
-    logging.info(r_query)
-    print "Graphing..."; t = datetime.now()
-    r(r_query)
-    print "It took %s to graph the results."%(datetime.now()-t)
+    logging.debug("Running settings.r_set_var_project for q:%s labels:%s.",
+                  queries, labels)
+    for i in range(len(variables)):
+        r(S.r_set_var_project%{
+                "var": variables[i],
+                "project": labels[i] if i < len(labels) else queries[i]})
+
+    logging.debug("Running settings.r_generate_graph for %s.", queries)
+    r(S.r_generate_graph%{"variables.scores": \
+                              ", ".join([i+".scores" for i in variables]),
+                          "path": path})
     return path
 
 @cache(S.cache_time, deleteRVars)
@@ -116,17 +113,13 @@ def calcSentimentScores(search, pos_words, neg_words):
     Accepts pos_words and neg_words to break the cache.
     """
     varName = getFreeRName()
-    print "Handling %s"%(search); t = datetime.now()
     tweets = [tweet.text for tweet in getTweets(search)]
-    print "It took %s to fetch %s tweets"%(datetime.now()-t, len(tweets)); t = datetime.now()
     tweets = robjects.StrVector(tweets if tweets else ["Neutral"])
-    r_query = S.r_calculate_sentiment%{"var": varName,
-                                       "tweet_text": tweets.r_repr(),
-                                       "search": search}
-    logging.info(r_query)
-    print "It took %s to log %s tweets"%(datetime.now()-t, len(tweets)); t = datetime.now()
-    r(r_query)
-    print "It took %s to analyze %s tweets"%(datetime.now()-t, len(tweets))
+    
+    logging.debug("Running settings.r_calculate_sentiment for %s.", search)
+    r(S.r_calculate_sentiment%{"var": varName,
+                               "tweet_text": tweets.r_repr(),
+                               "search": search})
     return varName
 
 def getFreeRName():
@@ -147,21 +140,16 @@ def twitterSentimentQuery():
     pos_words = request.GET.get("pos.words")
     neg_words = request.GET.get("neg.words")
     if q:
-        # Make the additional options are they're lists
-        labels_list = tuple(s.strip() for s in labels.split(","))\
-            if labels else tuple()
-        pos_words_list = tuple(s.strip() for s in pos_words.split(","))\
-            if pos_words else ("",)
-        neg_words_list = tuple(s.strip() for s in neg_words.split(","))\
-            if neg_words else ("",)
+        # Make the additional options are they're tuples.
+        labels_tuple = convertStringToTuple(labels) if labels else tuple()
+        pos_words_tuple = convertStringToTuple(pos_words) if pos_words else ("",)
+        neg_words_tuple = convertStringToTuple(neg_words) if neg_words else ("",)
         
-        logging.info("Getting graph")
-        t = datetime.now()
-        graph = getSentimentHist(tuple(s.strip() for s in q.split(",")),
-                                 labels=labels_list,
-                                 pos_words=pos_words_list,
-                                 neg_words=neg_words_list)
-        print "It took %s for the whole process."%(datetime.now()-t)
+        logging.debug("Generating histogram...")
+        graph = getSentimentHist(convertStringToTuple(q),
+                                 labels=labels_tuple,
+                                 pos_words=pos_words_tuple,
+                                 neg_words=neg_words_tuple)
         logging.info("Path to graph: %s", graph)
     return {"q": q if q else S.defaultSearch,
             "labels": labels if labels else "",
