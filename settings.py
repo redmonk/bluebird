@@ -36,8 +36,7 @@ r_setup_sentiment = """\
 
 # The R code for creating the list of sentiment scores from the tweets
 r_calculate_sentiment = """\
-    %(var)s.text <- %(tweet_text)s
-    %(var)s.scores <- score.sentiment(%(var)s.text, pos.words, neg.words)
+    %(var)s.scores <- score.sentiment(%(tweet_text)s, pos.words, neg.words)
 """
 
 # The R code that set the projects label on the graph
@@ -56,6 +55,5 @@ r_generate_graph = """\
 
 # The R code to delete variables
 r_delete_vars = """\
-    rm(%(var)s.text)
     rm(%(var)s.scores)
 """ 

@@ -74,6 +74,7 @@ api = tweepy.API()
 @cache(S.cache_time)
 def getTweets(search, n=1500):
     "Get up to 1500 tweets from the last week from twitter containing the search term"
+    print "Searching:", search
     return tuple(tweepy.Cursor(api.search, q=search, rpp=100).items(n))
 
 ### R Interface
@@ -86,6 +87,9 @@ def getSentimentHist(queries, labels, pos_words, neg_words):
     # Setup the extra words
     logging.debug("Running settings.r_setup_sentiment for pos:%s neg:%s.",
                   pos_words, neg_words)
+    print S.r_setup_sentiment%{
+        "pos.words": ", ".join('"'+i+'"' for i in pos_words),
+        "neg.words": ", ".join('"'+i+'"' for i in neg_words)}
     r(S.r_setup_sentiment%{
         "pos.words": ", ".join('"'+i+'"' for i in pos_words),
         "neg.words": ", ".join('"'+i+'"' for i in neg_words)})

@@ -15,9 +15,32 @@ of all the tweets for a given query.
 3. Open settings and set the host and port to the desired values.
 3. Run it as =./bluebird.py= with Python.
 4. Visit =host:port= i.e. =localhost:8348=.
-5. Enter a query and hit analyze.
+5. Enter a query and hit analyze. (There may be a long delay, the
+   latency for fetching from twitter is very high)
 
 * Usage
+  Usage is relatively simple visit the webpage and enter a query then
+  hit analyze and Blue Bird will search twitter, analyze the results
+  and provide a stacked histogram of the results. Visit [[http://jeffreybreen.wordpress.com/2011/07/04/twitter-text-mining-r-slides/][here]] (or read
+  the source) to get a nice description of the method used to produce
+  the charts before you start making conclusions. That's all you need
+  to know to get started.
+
+- How do I make it display "Python" and "Ruby" when I search
+  "#python, #ruby"?
+
+  Under show additional options there is a =Labels= option, simply
+  type a comma separated list in the same order as above and the
+  labels will be used in place of the search. In this case "Python,
+  Ruby".
+
+- How do I augment the word lists being used to judge the sentiment of
+  a tweet?
+
+  Under show additional options there is a positive and a negative
+  words option. In their respective boxes, type a comma separated list
+  of the words you'd like to augment the words list with and click
+  analyze and you'll get the results.
 
 * Dependencies
 ** Python (tested in 2.7)
@@ -33,8 +56,12 @@ Can be install in R with "install.packages('name')"
 - stringr
 
 * Notes
-- Must add "export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/lib/R/lib" to .bashrc
-: ImportError: libR.so: cannot open shared object file: No such file or directory
-This is the error you get if you don't. /usr/lib/R/lib should be replaced with the local path to libR.so
+- Must add "export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/lib/R/lib"
+  to your .bashrc
 
-- Bug when nothing returned in search. Defaults to one neutral item in the histogram.
+: ImportError: libR.so: cannot open shared object file: No such file or directory
+This is the error you get if you don't. /usr/lib/R/lib should be
+replaced with the local path to libR.so
+
+- Bug when nothing returned in search. Defaults to one neutral item in
+  the histogram.

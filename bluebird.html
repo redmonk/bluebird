@@ -2,6 +2,8 @@
   <head>
     <title>Blue Bird: Simple Twitter Sentiment Analysis</title>
     <script type="text/javascript" src="static/jquery-1.6.2.min.js"></script>
+    <script type="text/javascript" src="static/jquery.qtip-1.0.0-rc3.min.js">
+    </script>
     <style type="text/css">
       div.wrapper {
           width: 600px;
@@ -39,6 +41,16 @@
       .floatRight { float: right; }
       .hidden { display: none; }
       img.result { width: 100% }
+      .help {
+          float: left;
+          background-color: white;
+          color: #4099FF;
+          font-weight: bold;
+          padding: 0px 6px;
+          cursor: help;
+          margin-right: 5px;
+          margin-left: -20px;
+      }
     </style>
     <script type="text/javascript">
       function toggleAdvanced() {
@@ -46,6 +58,32 @@
               $('img.result').css('margin-top', $('#top').height()+'px');
           });
       }
+      $(document).ready(function() {
+          $('#q-help').qtip({
+              content: 'A comma seperated list of terms to search twitter for and produce a stacked histogram of the simple sentiment score for these searches.',
+              style: "blue",
+              show: 'mouseover',
+              hide: 'mouseout'
+          });
+          $('#labels-help').qtip({
+              content: 'A comma seperated list of labels. The label displays in the graph in place of the search term entered above. They must be in the same order, the first one displays in the graph instead of the first term, the second in place of the second, etc.',
+              style: "blue",
+              show: 'mouseover',
+              hide: 'mouseout'
+          });
+          $('#pos_words-help').qtip({
+              content: 'A comma seperated list of words that indicate positive sentiment. These words are in addition to the existing list.',
+              style: "blue",
+              show: 'mouseover',
+              hide: 'mouseout'
+          });
+          $('#neg_words-help').qtip({
+              content: 'A comma seperated list of words that indicate negative sentiment. These words are in addition to the existing list.',
+              style: "blue",
+              show: 'mouseover',
+              hide: 'mouseout'
+          });
+      });
     </script>
   </head>
   <body>
@@ -53,6 +91,7 @@
       <div id="query" class="wrapper">
 	<form method="get" id="sentiment-form" action=".">
 	  <input type="input" name="q" value="{{ q }}" />
+	  <div class="help" id="q-help">?</div>
 	  <input type="submit" name="submit" value="Analyze" /><br/>
 	  Use commas to compare multiple searches. (max 8)
 	  <p class="advanced">
@@ -67,15 +106,18 @@
 	       >
 	    <div class="float">
 	      <label for="labels">Labels:</label>
+	      <div class="help" id="labels-help">?</div>
 	      <input type="input" name="labels" value="{{ labels }}"
 		     class="floatRight"/>
 	    </div>
 	    <div class="float">
 	      <label for="pos.words">Positive words:</label>
+	      <div class="help" id="pos_words-help">?</div>
 	      <textarea name="pos.words">{{ pos_words }}</textarea>
 	    </div>
 	    <div class="float">
 	      <label for="neg.words">Negative words:</label>
+	      <div class="help" id="neg_words-help">?</div>
 	      <textarea name="neg.words">{{ neg_words }}</textarea>
 	    </div>
 	    <center>
