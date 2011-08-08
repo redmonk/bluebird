@@ -63,10 +63,11 @@ def cache(cacheTime, removeFunc=lambda key, time, val: None):
     return dec
 
 def deleteRVars(key, time, val):
-    "Delete var.text and var.score"
+    "Delete the R variable var.score"
     r(S.r_delete_vars%{"var": val})
 
 def convertStringToTuple(string, split=","):
+    "A helper function for turning a list of comma seperated values to a tuple"
     return tuple(s.strip() for s in string.split(split))
 
 ### Twitter Interface
@@ -93,10 +94,12 @@ def getSentimentHist(queries, labels, pos_words, neg_words):
     r(S.r_setup_sentiment%{
         "pos.words": ", ".join('"'+i+'"' for i in pos_words),
         "neg.words": ", ".join('"'+i+'"' for i in neg_words)})
-    
+
+    # Calculate the sentiment scores for each query
     variables = [calcSentimentScores(query, pos_words, neg_words)
                  for query in queries]
-    
+
+    # Set the project name (Done here so it doesn't break the cache)
     logging.debug("Running settings.r_set_var_project for q:%s labels:%s.",
                   queries, labels)
     for i in range(len(variables)):
@@ -104,6 +107,7 @@ def getSentimentHist(queries, labels, pos_words, neg_words):
                 "var": variables[i],
                 "project": labels[i] if i < len(labels) else queries[i]})
 
+    # Generat the graph
     logging.debug("Running settings.r_generate_graph for %s.", queries)
     r(S.r_generate_graph%{"variables.scores": \
                               ", ".join([i+".scores" for i in variables]),
@@ -148,7 +152,8 @@ def twitterSentimentQuery():
         labels_tuple = convertStringToTuple(labels) if labels else tuple()
         pos_words_tuple = convertStringToTuple(pos_words) if pos_words else ("",)
         neg_words_tuple = convertStringToTuple(neg_words) if neg_words else ("",)
-        
+
+        # Get the path to the histogram
         logging.debug("Generating histogram...")
         graph = getSentimentHist(convertStringToTuple(q),
                                  labels=labels_tuple,

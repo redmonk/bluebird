@@ -6,14 +6,17 @@
 Blue Bird is a web interface for performing simple sentiment analysis
 of twitter. It follows [[http://jeffreybreen.wordpress.com/2011/07/04/twitter-text-mining-r-slides/][a simple method]] of assigning each tweet a
 single integer representing each tweets sentiment based off the
-presence of positive and negative words. It then produces a histogram
-of all the tweets for a given query.
+presence of positive and negative words. It then produces a stacked
+histogram of all the tweets for a given query.
 
 * Installation and Setup
-1. Clone this repository.
+1. Clone this repository or click the download button in the upper
+   right hand corner.
 2. Install all dependencies listed below.
 3. Open settings and set the host and port to the desired values.
-3. Run it as =./bluebird.py= with Python.
+
+   Default: localhost:8348
+3. Run it the script as =./bluebird.py= with Python.
 4. Visit =host:port= i.e. =localhost:8348=.
 5. Enter a query and hit analyze. (There may be a long delay, the
    latency for fetching from twitter is very high)
@@ -56,12 +59,14 @@ Can be install in R with "install.packages('name')"
 - stringr
 
 * Notes
-- Must add "export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/lib/R/lib"
-  to your .bashrc
+- If you get the following import error:
+  : ImportError: libR.so: cannot open shared object file: No such file or directory
 
-: ImportError: libR.so: cannot open shared object file: No such file or directory
-This is the error you get if you don't. /usr/lib/R/lib should be
-replaced with the local path to libR.so
+  Then you must add the following to your .bashrc
+  : export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/lib/R/lib
+  /usr/lib/R/lib may be a different path depending on your R
+  install. It should be replaced with the directory that contains:
+  =libR.so=
 
 - Bug when nothing returned in search. Defaults to one neutral item in
-  the histogram.
+  the histogram to prevent R from raising an error.
