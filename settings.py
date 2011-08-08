@@ -2,7 +2,7 @@ import datetime, logging
 
 ### Server Settings  ############################################################
 # The host and port to bind to when serving webpages.
-host = "192.168.1.6"
+host = "192.168.1.3"
 port = 8348
 
 ### Application Settings  #######################################################

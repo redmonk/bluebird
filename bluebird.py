@@ -78,6 +78,11 @@ def getTweets(search, n=1500):
     print "Searching:", search
     return tuple(tweepy.Cursor(api.search, q=search, rpp=100).items(n))
 
+@cache(S.cache_time)
+def getTweetsText(search, n=1500):
+    "Return text of up to 1500 tweets from twitter search as a list"
+    return tuple(tweet.text for tweet in getTweets(search, n))
+
 ### R Interface
 @cache(S.cache_time)
 def getSentimentHist(queries, labels, pos_words, neg_words):
@@ -121,7 +126,7 @@ def calcSentimentScores(search, pos_words, neg_words):
     Accepts pos_words and neg_words to break the cache.
     """
     varName = getFreeRName()
-    tweets = [tweet.text for tweet in getTweets(search)]
+    tweets = getTweetsText(search)
     tweets = robjects.StrVector(tweets if tweets else ["Neutral"])
     
     logging.debug("Running settings.r_calculate_sentiment for %s.", search)
