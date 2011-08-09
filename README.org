@@ -46,6 +46,37 @@ histogram of all the tweets for a given query.
   of the words you'd like to augment the words list with and click
   analyze and you'll get the results.
 
+* Adding Additional Services
+By default, Blue Bird comes with one service, the tweepy interface to
+twitter. However, Blue Bird is written to allow the use of multiple
+services.
+
+*What is a service?* As far as bluebird is concerned, a service as any
+ python function that takes a single argument, the query, and returns
+ an iterable of strings. Each string in the iterable is scored
+ individually and the scores of all strings in the iterable are used
+ to generate a histogram.
+
+*How do I write one?* Open up =services.py= and look at the tweepy
+ service for an example. The following is a skeleton for a service.
+
+#+BEGIN_SRC python 
+def myService(query):
+    "My service, it's awesome!"
+    # Magic happens: put your service code here
+    return ["I'm happy, I wrote my first service", "I'm upset :(",
+            query] # replace with any iterable of strings (iterables
+            # include lists, tuples and more)
+#+END_SRC
+
+Once you've written you're service, go to the bottom of =services.py=
+and add it to the SERVICES variable:
+#+BEGIN_SRC python 
+SERVICES = [("Tweepy", getTweetsText), ("My Service", myService)]
+#+END_SRC
+
+Now restart Blue Bird and your service should be available.
+
 * Dependencies
 ** Python (tested in 2.7)
 Can be installed with "easy-install name"
