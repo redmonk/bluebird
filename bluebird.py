@@ -59,6 +59,8 @@ def cache(cacheTime, removeFunc=lambda key, time, val: None):
             else:
                 cache[key] = (datetime.now(), f(*args, **kwargs))
                 return cache[key][1]
+        call.__name__ = f.__name__
+        call.__doc__ = f.__doc__
         return call
     return dec
 

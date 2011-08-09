@@ -16,7 +16,8 @@ histogram of all the tweets for a given query.
 3. Open settings and set the host and port to the desired values.
 
    Default: localhost:8348
-3. Run it the script as =./bluebird.py= with Python.
+3. Run it the script as =./bluebird= it will start out as a background
+   process.
 4. Visit =host:port= i.e. =localhost:8348=.
 5. Enter a query and hit analyze. (There may be a long delay, the
    latency for fetching from twitter is very high)
