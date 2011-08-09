@@ -8,7 +8,7 @@ Usage: ./bluebird.py
 """
 
 __author__ = "Alex Henning"
-__version__ = "0.1.dev"
+__version__ = "0.2.dev"
 
 import logging
 from bottle import Bottle, run, view, request, static_file
@@ -83,6 +83,7 @@ def getSentimentHist(queries, service, labels, pos_words, neg_words,
 def calcSentimentScores(search, service, pos_words, neg_words):
     """Calculate the score in R and return the R variable referring to the object
 
+    search: The search to use when gathering data from the service.
     service: The service to gather information from.
     Accepts pos_words and neg_words to break the cache when they change.
     """
