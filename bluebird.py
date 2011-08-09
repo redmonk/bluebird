@@ -23,16 +23,15 @@ from utils import cache
 
 ### Load R Libraries
 r = robjects.r
-
 # Executes `R-setup.R' in our local R environment
 with file(S.r_setup) as r_file: r(r_file.read())
 
 ### Utils
 def deleteRVars(key, time, val):
-    "Delete the R variable var.score"
+    "Delete the R variable, the method for doing so is described in the settings."
     r(S.r_delete_vars%{"var": val})
 
-def convertStringToTuple(string, split=","):
+def convertCSVToTuple(string, split=","):
     "A helper function for turning a list of comma seperated values to a tuple"
     return tuple(s.strip() for s in string.split(split))
 
@@ -44,7 +43,7 @@ def getSentimentHist(queries, service, labels, pos_words, neg_words,
     logging.info("Calculating histogram for: %s", (queries,))
     path = "images/"+str(datetime.now())+".png"
 
-    # Setup the extra words
+    # Setup the extra words in R for all sentiment calculations
     logging.debug("Running settings.r_setup_sentiment for pos:%s neg:%s.",
                   pos_words, neg_words)
     print S.r_setup_sentiment%{
@@ -54,11 +53,14 @@ def getSentimentHist(queries, service, labels, pos_words, neg_words,
         "pos.words": ", ".join('"'+i+'"' for i in pos_words),
         "neg.words": ", ".join('"'+i+'"' for i in neg_words)})
 
-    # Calculate the sentiment scores for each query
+    # Calculate the sentiment scores for each query and gather the R
+    # variable names that store the resulte
     variables = [calcSentimentScores(query, service, pos_words, neg_words)
                  for query in queries]
 
-    # Set the project name (Done here so it doesn't break the cache)
+    # Set the project name in R (Done here so it doesn't break the
+    # cache of calcSentimentScore, increase speed when this is the
+    # only change made)
     logging.debug("Running settings.r_set_var_project for q:%s labels:%s.",
                   queries, labels)
     for i in range(len(variables)):
@@ -66,7 +68,7 @@ def getSentimentHist(queries, service, labels, pos_words, neg_words,
                 "var": variables[i],
                 "project": labels[i] if i < len(labels) else queries[i]})
 
-    # Generate the graph
+    # Generate the graph in R
     logging.debug("Running settings.r_generate_graph for %s.", queries)
     print S.r_generate_graph%{"variables.scores": \
                                   ", ".join([i+".scores" for i in variables]),
@@ -74,18 +76,22 @@ def getSentimentHist(queries, service, labels, pos_words, neg_words,
     r(S.r_generate_graph%{"variables.scores": \
                               ", ".join([i+".scores" for i in variables]),
                           "path": path, "width": width, "height": height})
-    return path
+    
+    return path # Return the path to the graph
 
 @cache(S.cache_time, deleteRVars)
 def calcSentimentScores(search, service, pos_words, neg_words):
     """Calculate the score in R and return the R variable referring to the object
 
-    Accepts pos_words and neg_words to break the cache.
+    service: The service to gather information from.
+    Accepts pos_words and neg_words to break the cache when they change.
     """
     varName = getFreeRName()
     strings = SERVICES_DICT[service](search)
+    # Convert the strings to R
     rStrings = robjects.StrVector(strings if strings else ["Neutral"])
-    
+
+    # Calculate the sentiment in R
     logging.debug("Running settings.r_calculate_sentiment for %s.", search)
     r(S.r_calculate_sentiment%{"var": varName,
                                "tweet_text": rStrings.r_repr(),
@@ -105,20 +111,21 @@ app = Bottle(catchall=False)
 @view(S.mainTemplate)
 def twitterSentimentQuery():
     "Returns the main page and handle form data submits"
+    # GET all of the form data
     q = request.GET.get("q")
     labels = request.GET.get("labels")
     pos_words = request.GET.get("pos.words")
     neg_words = request.GET.get("neg.words")
     service = request.GET.get("service", SERVICES[0][0])
-    if q:
+    if q: # If the form was submitted
         # Make the additional options are they're tuples.
-        labels_tuple = convertStringToTuple(labels) if labels else tuple()
-        pos_words_tuple = convertStringToTuple(pos_words) if pos_words else ("",)
-        neg_words_tuple = convertStringToTuple(neg_words) if neg_words else ("",)
+        labels_tuple = convertCSVToTuple(labels) if labels else tuple()
+        pos_words_tuple = convertCSVToTuple(pos_words) if pos_words else ("",)
+        neg_words_tuple = convertCSVToTuple(neg_words) if neg_words else ("",)
 
         # Get the path to the histogram
         logging.debug("Generating histogram...")
-        graph = getSentimentHist(convertStringToTuple(q),
+        graph = getSentimentHist(convertCSVToTuple(q),
                                  service=service,
                                  labels=labels_tuple,
                                  pos_words=pos_words_tuple,
@@ -126,6 +133,9 @@ def twitterSentimentQuery():
                                  width=request.GET.get("width", "6"),
                                  height=request.GET.get("height", "6"))
         logging.info("Path to graph: %s", graph)
+
+    # If the request is to download the image, just download the
+    # image, otherwise provide the full HTML interface.
     if request.GET.get("action") == "download":
         return static_file(graph.split("/")[-1], root=S.imagePath, download=graph)
     else:
@@ -138,15 +148,18 @@ def twitterSentimentQuery():
                                       (service != SERVICES[0][0])),
                 "graph": graph if q else S.defaultImage}
 
+# For jQuery
 @app.route("/static/:path")
 def serveStaticMedia(path):
     "Serves static media when requested"
     return static_file(path, root="static/")
 
+# Serves the generated images
 @app.route("/images/:image")
 def serveImage(image):
     "Serves images when requested"
     return static_file(image, root=S.imagePath)
 
 if __name__ == "__main__":
+    # Start serving when this script is run.
     run(app, host=S.host, port=S.port)
