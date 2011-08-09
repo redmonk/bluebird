@@ -53,13 +53,15 @@ r_set_var_project = '%(var)s.scores$Project = "%(project)s"'
 # The R code for creating the histogram of the resulting
 # scores. %(variables.scores)s is a comma seperated list of all the
 # variables to graph and %(path)s is the path to save the graph to.
+# %(width)s and %(height)s are the width and height of the graph.
 r_generate_graph = """\
     allscores <- rbind(%(variables.scores)s)
-    png(file="%(path)s")
-    ggplot(data=allscores) + geom_bar(mapping=aes(x=score, fill=Project),\
-        binwidth=1) + facet_grid(Project~.) + theme_bw()\
+    png(file="%(path)s", width=%(width)s, height=%(height)s)
+    ggplot(data=allscores)\
+     + geom_bar(mapping=aes(x=score, fill=Project), binwidth=1)\
+     + facet_grid(Project~.) + theme_bw()\
      + scale_fill_brewer()
-    ggsave(file="%(path)s")
+    ggsave(file="%(path)s", width=%(width)s, height=%(height)s)
     dev.off()
 """
 

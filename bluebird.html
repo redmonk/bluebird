@@ -17,6 +17,10 @@
           width: 480px;
           height: 100px;
       }
+      select {
+          float: right;
+          width: 480px;
+      }
       #top {
           position: absolute;
           top: 0px;
@@ -44,6 +48,17 @@
           height: 100%;
           display: block;
           margin: auto auto;
+      }
+      #downloads {
+          position: fixed;
+          bottom: 0px;
+          right: 0px;
+          background-color: #989898;
+          padding-left: 10px;
+          font-weight: bold;
+          padding: 10px;
+          text-align: center;
+          color: white
       }
       .help {
           float: left;
@@ -87,16 +102,29 @@
               show: 'mouseover',
               hide: 'mouseout'
           });
+          $('#service-help').qtip({
+              content: 'The service to gather to data from, by default the tweepy twitter API.',
+              style: "blue",
+              show: 'mouseover',
+              hide: 'mouseout'
+          });
       });
+
+      function download(width, height) {
+         document.sentimentForm.width.value = width;
+         document.sentimentForm.height.value = height;
+         document.sentimentForm.action.value = "download";
+         document.sentimentForm.submit();
+      }
     </script>
   </head>
   <body>
     <div id="top">
       <div id="query" class="wrapper">
-	<form method="get" id="sentiment-form" action=".">
+	<form method="get" id="sentimentForm" name="sentimentForm" action=".">
 	  <input type="input" name="q" value="{{ q }}" />
 	  <div class="help" id="q-help">?</div>
-	  <input type="submit" name="submit" value="Analyze" /><br/>
+	  <input type="submit" name="analyze" value="Analyze" /><br/>
 	  Use commas to compare multiple searches. (max 8)
 	  <p class="advanced">
 	    <a href="javascript:toggleAdvanced()">
@@ -124,6 +152,18 @@
 	      <div class="help" id="neg_words-help">?</div>
 	      <textarea name="neg.words">{{ neg_words }}</textarea>
 	    </div>
+	    <div class="float">
+	      <label for="service">Service:</label>
+	      <div class="help" id="service-help">?</div>
+	      <select name="service">
+		%for service in SERVICES:
+		<option value="{{ service[0] }}">{{ service[0] }}</option>
+		%end
+	      </select>
+	    </div>
+	    <input type="hidden" name="width" value="6" />
+	    <input type="hidden" name="height" value="6" />
+	    <input type="hidden" name="action" value="view" />
 	    <center>
 		<a href="javascript:toggleAdvanced() ">Hide</a>
 	    </center>
@@ -132,6 +172,14 @@
       </div>
     </div>
     <img src="{{ graph }}" class="result" />
+    <div id="downloads">
+      DOWNLOADS
+      <div>
+	<a href="javascript:download(2, 2)">Small</a> |
+	<a href="javascript:download(4, 4)">Medium</a> |
+	<a href="javascript:download(6, 6)">Large</a>
+      </div>
+    </div>
     <script type="text/javascript">
       $('img.result').css('margin-top', $('#top').height()+'px')
     </script>
