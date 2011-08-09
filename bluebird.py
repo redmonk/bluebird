@@ -28,18 +28,20 @@ with file(S.r_setup) as r_file: r(r_file.read())
 
 ### Utils
 def deleteRVars(key, time, val):
-    "Delete the R variable, the method for doing so is described in the settings."
+    """Delete the R variable, the method for doing so is described in the settings.
+
+    Prevents memory issues with R over long runs."""
     r(S.r_delete_vars%{"var": val})
 
 def convertCSVToTuple(string, split=","):
-    "A helper function for turning a list of comma seperated values to a tuple"
+    """A helper function for turning a list of comma seperated values to a tuple"""
     return tuple(s.strip() for s in string.split(split))
 
 ### R Interface
 @cache(S.cache_time)
 def getSentimentHist(queries, service, labels, pos_words, neg_words,
                      width=6, height=6):
-    "Return the path to an image containing stacked histograms of the sentiment"
+    """Return the path to an image containing stacked histograms of the sentiment"""
     logging.info("Calculating histogram for: %s", (queries,))
     path = "images/"+str(datetime.now())+".png"
 
@@ -80,27 +82,29 @@ def getSentimentHist(queries, service, labels, pos_words, neg_words,
     return path # Return the path to the graph
 
 @cache(S.cache_time, deleteRVars)
-def calcSentimentScores(search, service, pos_words, neg_words):
+def calcSentimentScores(query, service, pos_words, neg_words):
     """Calculate the score in R and return the R variable referring to the object
 
-    search: The search to use when gathering data from the service.
+    query: The search to use when gathering data from the service.
     service: The service to gather information from.
     Accepts pos_words and neg_words to break the cache when they change.
+
+    Returns: The R variable storing the sentiment score of the query.
     """
     varName = getFreeRName()
-    strings = SERVICES_DICT[service](search)
+    strings = SERVICES_DICT[service](query)
     # Convert the strings to R
     rStrings = robjects.StrVector(strings if strings else ["Neutral"])
 
     # Calculate the sentiment in R
-    logging.debug("Running settings.r_calculate_sentiment for %s.", search)
+    logging.debug("Running settings.r_calculate_sentiment for %s.", query)
     r(S.r_calculate_sentiment%{"var": varName,
                                "tweet_text": rStrings.r_repr(),
-                               "search": search})
+                               "search": query})
     return varName
 
 def getFreeRName():
-    "Returns an R variable name not currently in use"
+    """Returns an R variable name not currently in use"""
     getFreeRName.count += 1
     return "twit_sent_var_"+str(getFreeRName.count)
 getFreeRName.count = 0
@@ -111,7 +115,7 @@ app = Bottle(catchall=False)
 @app.route("/")
 @view(S.mainTemplate)
 def twitterSentimentQuery():
-    "Returns the main page and handle form data submits"
+    """Returns the main page and handle form data submits"""
     # GET all of the form data
     q = request.GET.get("q")
     labels = request.GET.get("labels")
@@ -152,13 +156,13 @@ def twitterSentimentQuery():
 # For jQuery
 @app.route("/static/:path")
 def serveStaticMedia(path):
-    "Serves static media when requested"
+    """Serves static media when requested"""
     return static_file(path, root="static/")
 
 # Serves the generated images
 @app.route("/images/:image")
 def serveImage(image):
-    "Serves images when requested"
+    """Serves images when requested"""
     return static_file(image, root=S.imagePath)
 
 if __name__ == "__main__":
