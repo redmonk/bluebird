@@ -42,12 +42,12 @@ def convertCSVToTuple(string, split=","):
 def getSentimentHist(queries, service, labels, pos_words, neg_words,
                      width=6, height=6):
     """Return the path to an image containing stacked histograms of the sentiment"""
-    logging.info("Calculating histogram for: %s", (queries,))
+    # logging.info("Calculating histogram for: %s", (queries,))
     path = "images/"+str(datetime.now())+".png"
 
     # Setup the extra words in R for all sentiment calculations
-    logging.debug("Running settings.r_setup_sentiment for pos:%s neg:%s.",
-                  pos_words, neg_words)
+    # logging.debug("Running settings.r_setup_sentiment for pos:%s neg:%s.",
+    #               pos_words, neg_words)
     print S.r_setup_sentiment%{
         "pos.words": ", ".join('"'+i+'"' for i in pos_words),
         "neg.words": ", ".join('"'+i+'"' for i in neg_words)}
@@ -63,15 +63,15 @@ def getSentimentHist(queries, service, labels, pos_words, neg_words,
     # Set the project name in R (Done here so it doesn't break the
     # cache of calcSentimentScore, increase speed when this is the
     # only change made)
-    logging.debug("Running settings.r_set_var_project for q:%s labels:%s.",
-                  queries, labels)
+    # logging.debug("Running settings.r_set_var_project for q:%s labels:%s.",
+    #               queries, labels)
     for i in range(len(variables)):
         r(S.r_set_var_project%{
                 "var": variables[i],
                 "project": labels[i] if i < len(labels) else queries[i]})
 
     # Generate the graph in R
-    logging.debug("Running settings.r_generate_graph for %s.", queries)
+    # logging.debug("Running settings.r_generate_graph for %s.", queries)
     print S.r_generate_graph%{"variables.scores": \
                                   ", ".join([i+".scores" for i in variables]),
                               "path": path, "width": width, "height": height}
@@ -97,7 +97,7 @@ def calcSentimentScores(query, service, pos_words, neg_words):
     rStrings = robjects.StrVector(strings if strings else ["Neutral"])
 
     # Calculate the sentiment in R
-    logging.debug("Running settings.r_calculate_sentiment for %s.", query)
+    # logging.debug("Running settings.r_calculate_sentiment for %s.", query)
     r(S.r_calculate_sentiment%{"var": varName,
                                "tweet_text": rStrings.r_repr(),
                                "search": query})
@@ -129,7 +129,7 @@ def twitterSentimentQuery():
         neg_words_tuple = convertCSVToTuple(neg_words) if neg_words else ("",)
 
         # Get the path to the histogram
-        logging.debug("Generating histogram...")
+        # logging.debug("Generating histogram...")
         graph = getSentimentHist(convertCSVToTuple(q),
                                  service=service,
                                  labels=labels_tuple,
@@ -137,7 +137,7 @@ def twitterSentimentQuery():
                                  neg_words=neg_words_tuple,
                                  width=request.GET.get("width", "6"),
                                  height=request.GET.get("height", "6"))
-        logging.info("Path to graph: %s", graph)
+        # logging.info("Path to graph: %s", graph)
 
     # If the request is to download the image, just download the
     # image, otherwise provide the full HTML interface.

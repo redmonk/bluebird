@@ -26,12 +26,12 @@ def cache(cacheTime, removeFunc=lambda key, time, val: None):
         def call(*args, **kwargs):
             # Clean the cache of old entries
             now = datetime.now()
-            logging.info("%s: Cleaning cache at time %s", f.__name__, now)
+            # logging.info("%s: Cleaning cache at time %s", f.__name__, now)
             for key, (time, val) in cache.items():
-                logging.info("Checking cache of %s, the cache is %s old",
-                             key, now-time)
+                # logging.info("Checking cache of %s, the cache is %s old",
+                #              key, now-time)
                 if (now - time) > cacheTime:
-                    logging.info("%s: Removing %s %s", f.__name__,key, (time, val))
+                    # logging.info("%s: Removing %s %s", f.__name__,key, (time, val))
                     removeFunc(key, time, val)
                     del cache[key]
 
