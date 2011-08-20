@@ -7,7 +7,7 @@ import settings as S
 ### Twitter Service
 # The primary service that provides access to twitter using the tweepy
 # API. Please use it as an example when adding additional services.
-import tweepy
+import tweepy, traceback
 
 api = tweepy.API()
 
@@ -15,8 +15,15 @@ api = tweepy.API()
 @cache(S.cache_time)
 def getTweets(search, n=1500):
     "Get up to 1500 tweets from the last week from twitter containing the search term"
-    print "Searching:", search
-    return tuple(tweepy.Cursor(api.search, q=search, rpp=100).items(n))
+    print "Searching: `%s`"%search
+    tweets = []
+    try: 
+        for tweet in tweepy.Cursor(api.search, q=search, rpp=100).items(n):
+            tweets.append(tweet)
+    except tweepy.TweepError as e:
+        traceback.print_exc()
+        print "WARNING: Only %s tweets fetched from twitter."%len(tweets)
+    return tuple(tweets)
 
 # This is the primary hook which is used by Blue Bird to get the list
 # of text to analyze. The function takes a search term as it's
