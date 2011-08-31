@@ -4,7 +4,7 @@
 
 * About
 Blue Bird is a web interface for performing simple sentiment analysis
-of twitter. It follows [[http://jeffreybreen.wordpress.com/2011/07/04/twitter-text-mining-r-slides/][a simple method]] of assigning each tweet a
+of twitter. It follows Jeffrey Breen's [[http://jeffreybreen.wordpress.com/2011/07/04/twitter-text-mining-r-slides/][simple method]] of assigning each tweet a
 single integer representing each tweets sentiment based off the
 presence of positive and negative words. It then produces a stacked
 histogram of all the tweets for a given query.
