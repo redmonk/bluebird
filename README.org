@@ -9,6 +9,10 @@ single integer representing each tweets sentiment based off the
 presence of positive and negative words. It then produces a stacked
 histogram of all the tweets for a given query.
 
+* Credit
+
+Blue Bird's sentiment analysis R code was originally written by Jeffrey Breen. The Apache licensed code is available [[https://github.com/jeffreybreen/twitter-sentiment-analysis-tutorial-201107][here]]. The sentiment lexicon was originally compiled by Bing Liu and Minqing Hu and is available for download [[http://www.cs.uic.edu/~liub/FBS/sentiment-analysis.html][here]]. It is included in this repository by permission of the author. 
+
 * Installation and Setup
 1. Clone this repository or click the download button in the upper
    right hand corner.
